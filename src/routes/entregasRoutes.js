@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { EntregasMemoria } from '../database/EntregasMemoria.js';
+import { Database } from '../database/Database.js';;
 import { EntregaRepository } from '../repositories/EntregaRepository.js';
 import { EntregaService } from '../services/EntregaService.js';
 import { EntregaController } from '../controllers/EntregaController.js';
 
 export function montarRotasDeEntregas() {
-  const memoria = new EntregasMemoria();
-  const repository = new EntregaRepository(memoria);
+  const database = new Database();
+  const repository = new EntregaRepository(database);
   const service = new EntregaService(repository);
   const controller = new EntregaController(service);
 
