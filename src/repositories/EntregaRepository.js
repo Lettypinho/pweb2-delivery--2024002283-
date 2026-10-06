@@ -12,8 +12,22 @@ export class EntregaRepository {
     return entrega;
   }
 
-  listarTodos() {
-    return [...this.database.entregas.values()];
+  listarTodos(filtros = {}) {
+    let entregas = [...this.database.entregas.values()];
+
+    if (filtros.status) {
+      entregas = entregas.filter(
+        (entrega) => entrega.status === filtros.status,
+      );
+    }
+
+    if (filtros.motoristaId !== undefined) {
+      entregas = entregas.filter(
+        (entrega) => entrega.motoristaId === filtros.motoristaId,
+      );
+    }
+
+    return entregas;
   }
 
   buscarPorId(id) {
@@ -45,8 +59,6 @@ export class EntregaRepository {
     );
   }
 
-  // Métodos mantidos temporariamente para compatibilidade
-  // com o código da Atividade 05.
   salvar(dados) {
     return this.criar(dados);
   }
