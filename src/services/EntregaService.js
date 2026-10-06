@@ -1,9 +1,10 @@
 import { AppError } from '../utils/AppError.js';
 
 export class EntregaService {
-  constructor(repository) {
-    this.repository = repository;
-  }
+  constructor(entregaRepository, motoristaRepository) {
+  this.entregaRepository = entregaRepository;
+  this.motoristaRepository = motoristaRepository;
+}
 
   registrarNovaEntrega({ descricao, origem, destino }) {
     if (!descricao || !origem || !destino) {
@@ -73,4 +74,38 @@ export class EntregaService {
   obterHistorico(id) {
     return this.obterOuFalhar(id).historico;
   }
+  atribuirMotorista(id, motoristaId) {
+  const entrega = this.obterOuFalhar(id);
+
+  if (entrega.status !== 'CRIADA') {
+    throw new AppError(
+      422,
+      'motorista só pode ser atribuído a uma entrega CRIADA',
+    );
+  }
+
+  const motorista =
+    this.motoristaRepository.buscarPorId(motoristaId);
+
+  if (!motorista) {
+    throw new AppError(404, 'motorista não existe');
+  }
+
+  if (motorista.status !== 'ATIVO') {
+    throw new AppError(422, 'motorista está INATIVO');
+  }
+
+  const historico = [
+    ...entrega.historico,
+    {
+      data: new Date().toISOString(),
+      descricao: `motorista ${motoristaId} atribuído à entrega`,
+    },
+  ];
+
+  return this.entregaRepository.atualizar(id, {
+    motoristaId,
+    historico,
+  });
+}
 }
