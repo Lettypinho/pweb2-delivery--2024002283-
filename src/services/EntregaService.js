@@ -6,25 +6,22 @@ export class EntregaService {
     this.motoristaRepository = motoristaRepository;
   }
 
-  registrarNovaEntrega({ descricao, origem, destino }) {
+  async registrarNovaEntrega({ descricao, origem, destino }) {
     if (!descricao || !origem || !destino) {
       throw new AppError(400, 'informe descricao, origem e destino');
     }
 
     if (origem === destino) {
-      throw new AppError(
-        400,
-        'origem e destino não podem ser o mesmo lugar',
-      );
+      throw new AppError(400, 'origem e destino não podem ser o mesmo lugar');
     }
 
-    if (
-      this.entregaRepository.encontrarAtiva(
-        descricao,
-        origem,
-        destino,
-      )
-    ) {
+    const entregaAtiva = await this.entregaRepository.encontrarAtiva(
+      descricao,
+      origem,
+      destino,
+    );
+
+    if (entregaAtiva) {
       throw new AppError(409, 'já existe uma entrega ativa igual a essa');
     }
 
@@ -43,14 +40,14 @@ export class EntregaService {
     });
   }
 
-  listarEntregas(status) {
+  async listarEntregas(status) {
     return this.entregaRepository.listarTodos(
       status ? { status } : {},
     );
   }
 
-  obterOuFalhar(id) {
-    const entrega = this.entregaRepository.buscarPorId(id);
+  async obterOuFalhar(id) {
+    const entrega = await this.entregaRepository.buscarPorId(id);
 
     if (!entrega) {
       throw new AppError(404, 'entrega não existe');
@@ -59,8 +56,8 @@ export class EntregaService {
     return entrega;
   }
 
-  avancarStatus(id) {
-    const entrega = this.obterOuFalhar(id);
+  async avancarStatus(id) {
+    const entrega = await this.obterOuFalhar(id);
 
     let novoStatus;
 
@@ -77,18 +74,22 @@ export class EntregaService {
         throw new AppError(422, 'essa entrega não pode mais avançar');
     }
 
-    entrega.status = novoStatus;
+    const historico = [
+      ...entrega.historico,
+      {
+        data: new Date().toISOString(),
+        descricao: `status agora é ${novoStatus}`,
+      },
+    ];
 
-    entrega.historico.push({
-      data: new Date().toISOString(),
-      descricao: `status agora é ${novoStatus}`,
+    return this.entregaRepository.atualizar(id, {
+      status: novoStatus,
+      historico,
     });
-
-    return entrega;
   }
 
-  cancelarEntrega(id) {
-    const entrega = this.obterOuFalhar(id);
+  async cancelarEntrega(id) {
+    const entrega = await this.obterOuFalhar(id);
 
     if (
       entrega.status === 'ENTREGUE' ||
@@ -100,22 +101,27 @@ export class EntregaService {
       );
     }
 
-    entrega.status = 'CANCELADA';
+    const historico = [
+      ...entrega.historico,
+      {
+        data: new Date().toISOString(),
+        descricao: 'entrega cancelada',
+      },
+    ];
 
-    entrega.historico.push({
-      data: new Date().toISOString(),
-      descricao: 'entrega cancelada',
+    return this.entregaRepository.atualizar(id, {
+      status: 'CANCELADA',
+      historico,
     });
-
-    return entrega;
   }
 
-  obterHistorico(id) {
-    return this.obterOuFalhar(id).historico;
+  async obterHistorico(id) {
+    const entrega = await this.obterOuFalhar(id);
+    return entrega.historico;
   }
 
-  atribuirMotorista(id, motoristaId) {
-    const entrega = this.obterOuFalhar(id);
+  async atribuirMotorista(id, motoristaId) {
+    const entrega = await this.obterOuFalhar(id);
 
     if (entrega.status !== 'CRIADA') {
       throw new AppError(
@@ -125,7 +131,7 @@ export class EntregaService {
     }
 
     const motorista =
-      this.motoristaRepository.buscarPorId(motoristaId);
+      await this.motoristaRepository.buscarPorId(motoristaId);
 
     if (!motorista) {
       throw new AppError(404, 'motorista não existe');
