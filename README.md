@@ -1,74 +1,141 @@
-# Delivery Tracker — Exercício do Capítulo 4
+# Delivery Tracker — Prisma + SQLite
 
-> **Programação Web II — IFAL/Maceió.** Este é o **projeto do semestre** (avaliado). No Cap. 4 você
-> inicia a **Delivery Tracker API** com **arquitetura em camadas** e, depois, **Repository Pattern +
-> injeção de dependência**. A correção é **automática** (autograder de conformidade) + arquitetura.
+Projeto da disciplina de Programação Web II — IFAL/Maceió.
 
-## Como usar este repositório
+A aplicação Delivery Tracker utiliza arquitetura em camadas, Repository Pattern, injeção de dependência e persistência de dados com Prisma ORM e SQLite.
 
-1. Clique em **"Use this template"** e crie **`pweb2-delivery-<matricula>`** (ex.: `pweb2-delivery-20231012345`).
-   Este é o repositório que você usará o **semestre inteiro** (evolui a cada capítulo).
-2. Clone, instale e rode:
-   ```bash
-   npm install
-   npm start                                        # http://localhost:3000
-   # em outro terminal — autograder:
-   npm run check                                    # = BASE_URL=http://localhost:3000 node autograder/check.mjs
-   ```
-3. A cada `git push`, o **GitHub Actions** roda o autograder e mostra a nota na aba **Actions**
-   (resumo do job). O `autograder/check.mjs` é **aberto** — leia para saber exatamente o que se espera.
+## Tecnologias
 
-## O que implementar (em `src/`)
+- Node.js
+- Express
+- Prisma ORM
+- SQLite
 
-```
+## Estrutura
+
+```text
 src/
-├── controllers/   # traduz HTTP ↔ service (sem regra de negócio)
-├── services/      # TODA a regra de negócio
-├── repositories/  # só acesso a dados
-├── database/      # persistência SIMULADA em memória (sem banco real, sem ORM)
-├── routes/        # composição das dependências (injeção) + monta em /api
+├── config/          # configuração do Prisma Client
+├── controllers/     # camada HTTP
+├── services/        # regras de negócio
+├── repositories/    # acesso aos dados
+├── routes/          # composição e injeção de dependências
 └── utils/
+
+prisma/
+├── schema.prisma
+└── migrations/
 ```
 
-- **Regra de negócio só no Service.** Injeção de dependência no **composition root** (`src/routes`).
-- O `server.js` só configura o app (já traz o `GET /api/health` exigido — não remova).
+## Configuração
 
-## Duas etapas (ver os enunciados completos)
-
-- **Atividade 05 — Entregas em camadas:** CRUD de `/api/entregas`, ciclo de status
-  (`CRIADA → EM_TRANSITO → ENTREGUE`/`CANCELADA`), histórico. Meta: checagens de **Entregas** verdes.
-- **Atividade 06 — Motoristas + Contratos + DI:** `/api/motoristas`, atribuição de motorista,
-  contratos de repository (JSDoc) e composição num ponto único. Meta: **122/122**.
-
-> O critério de **inversão de dependência** é verificado pelo professor **trocando o repository por
-> um Mock** que respeita o contrato — programe contra o contrato desde o início.
-
-## Contrato (resumo)
-
-- Base `/api` · JSON · erro `{ "erro": "..." }` · `GET /api/health` → `{ "status": "ok" }`.
-- Status: `201` criar · `400` entrada inválida · `404` não encontrado · `409` unicidade
-  (duplicata/CPF) · `422` regra de estado (transição/atribuição inválida).
-- Execução: `npm start`, respeita `process.env.PORT`, branch `main`.
-
-Faça **um commit por avanço** (Conventional Commits, ex.: `feat(entregas): valida origem ≠ destino`).
-Bom trabalho! 🚀
-
-## Exemplos de uso (curl)
+Instale as dependências:
 
 ```bash
-curl -X POST http://localhost:3000/api/entregas \
-  -H "Content-Type: application/json" \
-  -d '{"descricao":"Encomenda 1","origem":"Maceió","destino":"Arapiraca"}'
-
-curl http://localhost:3000/api/entregas
-
-curl "http://localhost:3000/api/entregas?status=CRIADA"
-
-curl http://localhost:3000/api/entregas/1
-
-curl -X PATCH http://localhost:3000/api/entregas/1/avancar
-
-curl -X PATCH http://localhost:3000/api/entregas/1/cancelar
-
-curl http://localhost:3000/api/entregas/1/historico
+npm install
 ```
+
+Crie um arquivo `.env` baseado no `.env.example`:
+
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+Gere o Prisma Client:
+
+```bash
+npx prisma generate
+```
+
+Aplique as migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+## Executando
+
+```bash
+npm start
+```
+
+A API ficará disponível em:
+
+```text
+http://localhost:3000
+```
+
+Health check:
+
+```text
+GET /api/health
+```
+
+Resposta:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+## Testes
+
+Com a aplicação em execução, em outro terminal:
+
+```bash
+npm run check
+```
+
+O autograder verifica 122 pontos de conformidade da API.
+
+## Persistência
+
+Os dados de entregas, motoristas e históricos são armazenados em SQLite por meio do Prisma ORM.
+
+O arquivo local do banco de dados não é versionado no Git. A estrutura do banco é versionada através de:
+
+```text
+prisma/schema.prisma
+prisma/migrations/
+```
+
+Assim, em um novo ambiente, o banco pode ser criado com:
+
+```bash
+npx prisma generate
+npx prisma migrate deploy
+```
+
+## API
+
+### Entregas
+
+```text
+POST  /api/entregas
+GET   /api/entregas
+GET   /api/entregas/:id
+GET   /api/entregas/:id/historico
+PATCH /api/entregas/:id/avancar
+PATCH /api/entregas/:id/cancelar
+PATCH /api/entregas/:id/atribuir
+```
+
+### Motoristas
+
+```text
+POST /api/motoristas
+GET  /api/motoristas
+GET  /api/motoristas/:id
+GET  /api/motoristas/:id/entregas
+```
+
+## Regras principais
+
+- Uma entrega inicia com status `CRIADA`.
+- O fluxo normal é `CRIADA → EM_TRANSITO → ENTREGUE`.
+- Uma entrega também pode ser cancelada quando permitido pelas regras de negócio.
+- O histórico das alterações da entrega é persistido no banco.
+- O CPF do motorista é único.
+- Apenas motoristas ativos podem ser atribuídos às entregas conforme as regras da aplicação.
+- Os dados permanecem disponíveis após reiniciar a aplicação.

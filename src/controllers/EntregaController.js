@@ -3,63 +3,71 @@ export class EntregaController {
     this.service = service;
   }
 
-  registrar(req, res, next) {
+  async registrar(req, res, next) {
     try {
-      const entrega = this.service.registrarNovaEntrega(req.body || {});
+      const entrega = await this.service.registrarNovaEntrega(req.body || {});
       res.status(201).json(entrega);
     } catch (erro) {
       next(erro);
     }
   }
 
-  listar(req, res, next) {
+  async listar(req, res, next) {
     try {
-      const entregas = this.service.listarEntregas(req.query.status);
+      const entregas = await this.service.listarEntregas(req.query.status);
       res.status(200).json(entregas);
     } catch (erro) {
       next(erro);
     }
   }
 
-  obterPorId(req, res, next) {
+  async obterPorId(req, res, next) {
     try {
-      const entrega = this.service.obterOuFalhar(Number(req.params.id));
+      const entrega = await this.service.obterOuFalhar(
+        Number(req.params.id),
+      );
       res.status(200).json(entrega);
     } catch (erro) {
       next(erro);
     }
   }
 
-  avancar(req, res, next) {
+  async avancar(req, res, next) {
     try {
-      const entrega = this.service.avancarStatus(Number(req.params.id));
+      const entrega = await this.service.avancarStatus(
+        Number(req.params.id),
+      );
       res.status(200).json(entrega);
     } catch (erro) {
       next(erro);
     }
   }
 
-  cancelar(req, res, next) {
+  async cancelar(req, res, next) {
     try {
-      const entrega = this.service.cancelarEntrega(Number(req.params.id));
+      const entrega = await this.service.cancelarEntrega(
+        Number(req.params.id),
+      );
       res.status(200).json(entrega);
     } catch (erro) {
       next(erro);
     }
   }
 
-  historico(req, res, next) {
+  async historico(req, res, next) {
     try {
-      const historico = this.service.obterHistorico(Number(req.params.id));
+      const historico = await this.service.obterHistorico(
+        Number(req.params.id),
+      );
       res.status(200).json(historico);
     } catch (erro) {
       next(erro);
     }
   }
 
-  atribuirMotorista(req, res, next) {
+  async atribuirMotorista(req, res, next) {
     try {
-      const entrega = this.service.atribuirMotorista(
+      const entrega = await this.service.atribuirMotorista(
         Number(req.params.id),
         Number(req.body.motoristaId),
       );

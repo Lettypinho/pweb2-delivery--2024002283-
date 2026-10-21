@@ -1,17 +1,15 @@
 import { Router } from 'express';
-import { Database } from '../database/Database.js';
-import { EntregaRepository } from '../repositories/EntregaRepository.js';
-import { MotoristaRepository } from '../repositories/MotoristaRepository.js';
+import { prisma } from '../config/database.js';
+import { PrismaEntregaRepository } from '../repositories/PrismaEntregaRepository.js';
+import { PrismaMotoristaRepository } from '../repositories/PrismaMotoristaRepository.js';
 import { EntregaService } from '../services/EntregaService.js';
 import { MotoristaService } from '../services/MotoristaService.js';
 import { EntregaController } from '../controllers/EntregaController.js';
 import { MotoristaController } from '../controllers/MotoristaController.js';
 
 export function montarRotasDeEntregas() {
-  const database = new Database();
-
-  const entregaRepository = new EntregaRepository(database);
-  const motoristaRepository = new MotoristaRepository(database);
+  const entregaRepository = new PrismaEntregaRepository(prisma);
+  const motoristaRepository = new PrismaMotoristaRepository(prisma);
 
   const entregaService = new EntregaService(
     entregaRepository,
@@ -84,6 +82,8 @@ export function montarRotasDeEntregas() {
   );
 
   router.use((erro, req, res, next) => {
+    console.error(erro);
+
     res.status(erro.status || 500).json({
       erro: erro.message || 'erro interno no servidor',
     });
