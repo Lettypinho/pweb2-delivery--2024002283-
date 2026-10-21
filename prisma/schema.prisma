@@ -17,14 +17,14 @@ model Motorista {
 }
 
 model Entrega {
-  id          Int        @id @default(autoincrement())
-  descricao   String
-  origem      String
-  destino     String
-  status      String     @default("CRIADA")
-  motoristaId Int?
-  motorista   Motorista? @relation(fields: [motoristaId], references: [id])
-  historico   Evento[]
+  id           Int       @id @default(autoincrement())
+  descricao    String
+  origem       String
+  destino      String
+  status       String    @default("CRIADA")
+  motoristaId  Int?
+  motorista    Motorista? @relation(fields: [motoristaId], references: [id])
+  historico    Evento[]
 }
 
 model Evento {

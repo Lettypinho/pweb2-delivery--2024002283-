@@ -4,7 +4,7 @@
   "description": "Delivery Tracker — Exercício do Cap. 4 (arquitetura em camadas + Repository/DI).",
   "type": "module",
   "scripts": {
-    "start": "prisma migrate deploy && node server.js",
+    "start": "node start.js",
   "dev": "node --watch server.js",
   "check": "node autograder/check.mjs"
   },
