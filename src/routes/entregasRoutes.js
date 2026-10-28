@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { body } from 'express-validator';
 import { prisma } from '../config/database.js';
 import { PrismaEntregaRepository } from '../repositories/PrismaEntregaRepository.js';
 import { PrismaMotoristaRepository } from '../repositories/PrismaMotoristaRepository.js';
@@ -21,15 +22,16 @@ export function montarRotasDeEntregas() {
     entregaRepository,
   );
 
-  const entregaController = new EntregaController(entregaService);
-  const motoristaController = new MotoristaController(motoristaService);
+  const entregaController = new EntregaController(
+    entregaService,
+    motoristaService,
+  );
+
+  const motoristaController = new MotoristaController(
+    motoristaService,
+  );
 
   const router = Router();
-
-  router.post(
-    '/entregas',
-    entregaController.registrar.bind(entregaController),
-  );
 
   router.get(
     '/entregas',
@@ -37,8 +39,29 @@ export function montarRotasDeEntregas() {
   );
 
   router.get(
-    '/entregas/:id/historico',
-    entregaController.historico.bind(entregaController),
+    '/entregas/nova',
+    entregaController.nova.bind(entregaController),
+  );
+
+  router.post(
+    '/entregas',
+    [
+      body('descricao')
+        .trim()
+        .notEmpty()
+        .withMessage('Informe a descrição.'),
+
+      body('origem')
+        .trim()
+        .notEmpty()
+        .withMessage('Informe a origem.'),
+
+      body('destino')
+        .trim()
+        .notEmpty()
+        .withMessage('Informe o destino.'),
+    ],
+    entregaController.registrar.bind(entregaController),
   );
 
   router.get(
@@ -58,12 +81,14 @@ export function montarRotasDeEntregas() {
 
   router.patch(
     '/entregas/:id/atribuir',
+    [
+      body('motoristaId')
+        .notEmpty()
+        .withMessage('Selecione um motorista.')
+        .isInt({ min: 1 })
+        .withMessage('Motorista inválido.'),
+    ],
     entregaController.atribuirMotorista.bind(entregaController),
-  );
-
-  router.post(
-    '/motoristas',
-    motoristaController.cadastrar.bind(motoristaController),
   );
 
   router.get(
@@ -72,20 +97,49 @@ export function montarRotasDeEntregas() {
   );
 
   router.get(
-    '/motoristas/:id/entregas',
-    motoristaController.listarEntregas.bind(motoristaController),
+    '/motoristas/novo',
+    motoristaController.novo.bind(motoristaController),
   );
 
-  router.get(
-    '/motoristas/:id',
-    motoristaController.obterPorId.bind(motoristaController),
+  router.post(
+    '/motoristas',
+    [
+      body('nome')
+        .trim()
+        .notEmpty()
+        .withMessage('Informe o nome.'),
+
+      body('cpf')
+        .trim()
+        .notEmpty()
+        .withMessage('Informe o CPF.'),
+    ],
+    motoristaController.cadastrar.bind(motoristaController),
   );
 
   router.use((erro, req, res, next) => {
+    if (erro.status === 404) {
+      return res.status(404).render('erro', {
+        titulo: 'Não encontrado',
+        status: 404,
+        mensagem: erro.message,
+      });
+    }
+
+    if (erro.status && erro.status < 500) {
+      req.flash('erro', erro.message);
+
+      return res.redirect(
+        req.get('referer') || '/entregas',
+      );
+    }
+
     console.error(erro);
 
-    res.status(erro.status || 500).json({
-      erro: erro.message || 'erro interno no servidor',
+    return res.status(500).render('erro', {
+      titulo: 'Erro interno',
+      status: 500,
+      mensagem: 'Ocorreu um erro interno no servidor.',
     });
   });
 

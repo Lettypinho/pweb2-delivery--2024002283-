@@ -1,0 +1,127 @@
+<section class="page-header">
+  <div>
+    <h1>Entrega #<%= entrega.id %></h1>
+    <p><%= entrega.descricao %></p>
+  </div>
+
+  <a href="/entregas" class="btn btn-secondary">
+    Voltar
+  </a>
+</section>
+
+<div class="detail-card">
+  <p>
+    <strong>Origem:</strong>
+    <%= entrega.origem %>
+  </p>
+
+  <p>
+    <strong>Destino:</strong>
+    <%= entrega.destino %>
+  </p>
+
+  <p>
+    <strong>Status:</strong>
+
+    <span class="badge badge-<%= entrega.status.toLowerCase() %>">
+      <%= entrega.status %>
+    </span>
+  </p>
+
+  <p>
+    <strong>Motorista:</strong>
+
+    <%= entrega.motoristaId
+      ? `#${entrega.motoristaId}`
+      : 'Não atribuído'
+    %>
+  </p>
+</div>
+
+<% if (entrega.status === 'CRIADA') { %>
+  <section class="actions-card">
+    <h2>Ações</h2>
+
+    <form
+      method="POST"
+      action="/entregas/<%= entrega.id %>/avancar?_method=PATCH"
+    >
+      <button type="submit" class="btn">
+        Avançar Status
+      </button>
+    </form>
+
+    <form
+      method="POST"
+      action="/entregas/<%= entrega.id %>/cancelar?_method=PATCH"
+    >
+      <button type="submit" class="btn btn-danger">
+        Cancelar Entrega
+      </button>
+    </form>
+
+    <form
+      method="POST"
+      action="/entregas/<%= entrega.id %>/atribuir?_method=PATCH"
+    >
+      <label for="motoristaId">Motorista</label>
+
+      <select name="motoristaId" id="motoristaId">
+        <option value="">Selecione</option>
+
+        <% motoristas.forEach((motorista) => { %>
+          <% if (motorista.status === 'ATIVO') { %>
+            <option value="<%= motorista.id %>">
+              <%= motorista.nome %>
+            </option>
+          <% } %>
+        <% }) %>
+      </select>
+
+      <button type="submit" class="btn">
+        Atribuir Motorista
+      </button>
+    </form>
+  </section>
+<% } %>
+
+<% if (entrega.status === 'EM_TRANSITO') { %>
+  <section class="actions-card">
+    <h2>Ações</h2>
+
+    <form
+      method="POST"
+      action="/entregas/<%= entrega.id %>/avancar?_method=PATCH"
+    >
+      <button type="submit" class="btn">
+        Avançar Status
+      </button>
+    </form>
+
+    <form
+      method="POST"
+      action="/entregas/<%= entrega.id %>/cancelar?_method=PATCH"
+    >
+      <button type="submit" class="btn btn-danger">
+        Cancelar Entrega
+      </button>
+    </form>
+  </section>
+<% } %>
+
+<section class="history-card">
+  <h2>Histórico</h2>
+
+  <% if (!entrega.historico || entrega.historico.length === 0) { %>
+    <p>Nenhum evento registrado.</p>
+  <% } else { %>
+    <ul class="history-list">
+      <% entrega.historico.forEach((evento) => { %>
+        <li>
+          <strong><%= evento.descricao %></strong>
+          <span><%= evento.data %></span>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>

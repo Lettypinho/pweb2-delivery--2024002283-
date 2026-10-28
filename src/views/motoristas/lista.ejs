@@ -1,0 +1,45 @@
+<section class="page-header">
+  <div>
+    <h1>Motoristas</h1>
+    <p>Motoristas cadastrados no Delivery Tracker.</p>
+  </div>
+
+  <a href="/motoristas/novo" class="btn">
+    Novo Motorista
+  </a>
+</section>
+
+<% if (motoristas.length === 0) { %>
+  <div class="empty">
+    Nenhum motorista cadastrado.
+  </div>
+<% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>CPF</th>
+        <th>Placa</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% motoristas.forEach((motorista) => { %>
+        <tr>
+          <td><%= motorista.id %></td>
+          <td><%= motorista.nome %></td>
+          <td><%= motorista.cpf %></td>
+          <td><%= motorista.placaVeiculo || '-' %></td>
+
+          <td>
+            <span class="badge">
+              <%= motorista.status %>
+            </span>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>
